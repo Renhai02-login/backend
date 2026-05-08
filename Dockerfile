@@ -1,11 +1,10 @@
-# ─── Stage 1: Android SDK + Build Tools ───────────────────────────────────
-FROM ubuntu:22.04 AS android-base
+# ─── Android SDK + Build Tools ────────────────────────────────────────────
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ANDROID_HOME=/opt/android-sdk
-ENV FLUTTER_HOME=/opt/flutter
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${FLUTTER_HOME}/bin:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
 
 # Install base dependencies
 RUN apt-get update && apt-get install -y \
@@ -16,12 +15,7 @@ RUN apt-get update && apt-get install -y \
     git \
     nodejs \
     npm \
-    ruby \
-    ruby-dev \
     build-essential \
-    libssl-dev \
-    libreadline-dev \
-    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Android Command Line Tools
@@ -36,30 +30,18 @@ RUN yes | sdkmanager --licenses && \
     sdkmanager \
     "platform-tools" \
     "platforms;android-33" \
-    "platforms;android-34" \
     "build-tools;33.0.2" \
-    "build-tools;34.0.0" \
     "extras;android;m2repository" \
     "extras;google;m2repository"
-
-# Install Flutter
-RUN git clone https://github.com/flutter/flutter.git -b stable ${FLUTTER_HOME} && \
-    flutter precache --android && \
-    flutter config --no-analytics
 
 # Install global Node packages
 RUN npm install -g \
     cordova \
     @ionic/cli \
     @capacitor/cli \
-    nativescript \
-    @bubblewrap/cli \
-    expo-cli \
     yarn
 
-# ─── Stage 2: App ─────────────────────────────────────────────────────────
-FROM android-base AS app
-
+# ─── App ──────────────────────────────────────────────────────────────────
 WORKDIR /app
 
 COPY package.json ./
@@ -67,7 +49,6 @@ RUN npm install --production
 
 COPY . .
 
-# Create required directories
 RUN mkdir -p uploads builds logs
 
 EXPOSE 3001
